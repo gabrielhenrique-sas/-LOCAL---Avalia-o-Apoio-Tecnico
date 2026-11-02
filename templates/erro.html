@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<section class="card">
+  <div class="msg erro">{{ mensagem }}</div>
+  <a class="botao sec" href="{{ url_for('index', semana=semana.isoformat()) }}">Voltar</a>
+</section>
+{% endblock %}

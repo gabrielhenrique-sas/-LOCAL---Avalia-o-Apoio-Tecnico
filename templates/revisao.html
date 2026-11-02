@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block conteudo %}
+{% if ok %}<div class="msg ok">{{ ok }}</div>{% endif %}
+{% if erro %}<div class="msg erro">{{ erro }}</div>{% endif %}
+
+<section class="card">
+  <h2>Atividades para revisar</h2>
+  <p class="suave">Estas atividades vieram do calendário sem município reconhecido ou sem gerência válida. Corrija os dados e confirme:
+    só então elas passam a aparecer na lista da semana. A correção vale enquanto o texto da célula no calendário não mudar.</p>
+  <datalist id="municipios">{% for m in municipios %}<option value="{{ m }}">{% endfor %}</datalist>
+  {% for a in itens %}
+  <form method="post" action="{{ url_for('revisao_confirmar') }}" class="revisar">
+    <input type="hidden" name="chave" value="{{ a.chave }}">
+    <input type="hidden" name="semana" value="{{ semana.isoformat() }}">
+    <div class="suave"><b>Observação do calendário:</b> {{ a.obs or '-' }} · <b>Origem:</b> {{ a.origem }} · <b>Processo:</b> {{ a.proc or '-' }}</div>
+    <div class="linha-form">
+      <div><label>Data</label><input type="date" name="data" value="{{ a.data.isoformat() }}" required></div>
+      <div><label>Município</label><input type="text" name="municipio" list="municipios" value="{{ a.mun }}" required></div>
+      <div><label>Modalidade</label>
+        <select name="modalidade">{% for m in modalidades %}<option {{ 'selected' if m == a.modalidade }}>{{ m }}</option>{% endfor %}</select></div>
+    </div>
+    <label>Gerências</label>
+    <div class="checks">
+      {% for g in gerencias %}<label><input type="checkbox" name="gerencias" value="{{ g }}" {{ 'checked' if g in a.ger.replace(',', ' ').split() }}> {{ g }}</label>{% endfor %}
+    </div>
+    <div class="acoes"><button type="submit">Confirmar</button></div>
+  </form>
+  {% else %}
+  <p class="suave">Nada para revisar.</p>
+  {% endfor %}
+</section>
+
+<section class="card">
+  <h2>Avisos{% if semana_avisos %} da semana de {{ semana_avisos|data }}{% endif %}</h2>
+  <p class="suave">Somente leitura. Atualizado cada vez que a página da semana é aberta.</p>
+  {% if avisos %}
+  <table>
+    <thead><tr><th>Tipo</th><th>Município</th><th>Data</th><th>Detalhe</th></tr></thead>
+    <tbody>{% for i in avisos %}<tr><td>{{ i.tipo }}</td><td>{{ i.municipio }}</td><td>{{ i.data|data if i.data }}</td><td>{{ i.detalhe }}</td></tr>{% endfor %}</tbody>
+  </table>
+  {% else %}<p class="suave">Nenhum aviso.</p>{% endif %}
+</section>
+{% endblock %}

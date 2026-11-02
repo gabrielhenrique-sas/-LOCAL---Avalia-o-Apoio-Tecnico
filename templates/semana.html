@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+{% for e in ctx.erros %}<div class="msg erro">{{ e }}{% if ctx.abortado and loop.first %}
+  <a href="{{ url_for('index', semana=semana.isoformat(), aceitar=1) }}">Aceitar a leitura mesmo assim</a>{% endif %}</div>{% endfor %}
+{% if ctx.mudancas %}
+<div class="msg ok">Calendário atualizado:
+  {% for ev in ctx.mudancas %}{{ ev[0]|lower }}{{ ' ' ~ ev[1] if ev[1] }}{{ ', ' if not loop.last }}{% endfor %}.</div>
+{% endif %}
+{% if ctx.n_revisar_semana %}
+<div class="msg aviso">{{ ctx.n_revisar_semana }} atividade(s) desta semana aguardam revisão e ainda não aparecem na lista.
+  <a href="{{ url_for('revisao', semana=semana.isoformat()) }}">Abrir a revisão</a></div>
+{% endif %}
+
+<section class="card">
+  <div class="semana-barra">
+    <a class="botao sec" href="{{ url_for('index', semana=anterior.isoformat()) }}">◀ Semana anterior</a>
+    <div class="semana-titulo">Semana de {{ ctx.ini|data }} a {{ ctx.fim|data }}</div>
+    <a class="botao sec" href="{{ url_for('index', semana=proxima.isoformat()) }}">Próxima semana ▶</a>
+  </div>
+  <form method="get" action="{{ url_for('index') }}" class="semana-ir">
+    <label class="inline">Ir para a semana que contém
+      <input type="date" name="semana" value="{{ ctx.ini.isoformat() }}" onchange="this.form.submit()"></label>
+    {% if semana != atual %}<a class="botao sec" href="{{ url_for('index', semana=atual.isoformat()) }}">Semana atual</a>{% endif %}
+    <a class="botao" href="{{ url_for('index', semana=semana.isoformat()) }}" title="Consulta de novo o calendário e as respostas do formulário">↻ Atualizar</a>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Atividades da semana</h2>
+  {% if ctx.grupos %}
+  <form method="post" action="{{ url_for('preparar') }}">
+    <input type="hidden" name="semana" value="{{ ctx.ini.isoformat() }}">
+    <table>
+      <thead><tr><th></th><th>Data</th><th>Município</th><th>Modalidade</th><th>Gerências</th><th>Avaliações</th><th>Envio</th><th></th></tr></thead>
+      <tbody>
+      {% for g in ctx.grupos %}
+        <tr class="{{ 'enviado' if g.status }}">
+          <td><input type="checkbox" name="sel" value="{{ g.chave }}"></td>
+          <td>{{ g.data|data }} <span class="suave">{{ DIAS[g.data.weekday()] }}</span></td>
+          <td>{{ g.municipio }}</td>
+          <td>{% for m in g.modalidades %}<span class="tag mod">{{ m }}</span> {% endfor %}</td>
+          <td>{{ g.gerencias|join(', ') or '-' }}</td>
+          <td>{% if g.exatas is none %}<span class="suave">—</span>{% else %}<b>{{ g.exatas }}</b>
+            {% if g.seguinte %}<span class="suave">(+{{ g.seguinte }} no dia seguinte)</span>{% endif %}{% endif %}</td>
+          <td>{% if g.status %}<span class="tag ok">✔ Enviado</span><div class="suave">{{ g.enviado_em|hora }}{{ ' · sem avaliações' if g.status == 'Sem respostas' }}</div>
+              {% else %}<span class="tag">Não enviado</span>{% endif %}</td>
+          <td><button type="submit" name="unico" value="{{ g.chave }}" class="{{ 'sec' if g.status }}">{{ 'Reenviar' if g.status else 'Preparar envio' }}</button></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="acoes">
+      <button type="submit" class="sec">Preparar as selecionadas (um só relatório do município, com uma seção por data)</button>
+    </div>
+  </form>
+  {% else %}
+  <p class="suave">Nenhuma atividade de segunda a sexta nesta semana.</p>
+  {% endif %}
+</section>
+
+<p class="suave">
+  {% if ctx.itens_revisao %}{{ ctx.itens_revisao|length }} aviso(s) na aba Revisão ·{% endif %}
+  Respostas: {{ 'Google Planilhas' if cfg.respostas.google_sheet_id else (cfg.respostas.arquivo or '(não configurado)') }}
+  · Envio por e-mail: {{ 'configurado' if smtp_ok else 'não configurado (é possível baixar o PDF e o rascunho .eml)' }}
+</p>
+{% endblock %}

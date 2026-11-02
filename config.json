@@ -1,0 +1,33 @@
+{
+  "calendario": {
+    "fonte": "https://docs.google.com/spreadsheets/d/1U1yoaMT9x51nDpjt-i1mJFOacDv7bibond7A6hB3E3E/edit?usp=sharing"
+  },
+  "respostas": {
+    "arquivo": "dados/respostas_exemplo.xlsx",
+    "aba": "Sheet1",
+    "google_sheet_id": "1Gf-QH1DkZW0erw54qyORay_Frgm94eA8Dyf3ww7T_RA",
+    "google_gid": "0",
+    "google_credenciais": "credentials.json",
+    "google_token": "token.json"
+  },
+  "controle": {
+    "arquivo": "CONTROLE.xlsx",
+    "modelo": "dados/controle_exemplo.xlsx"
+  },
+  "pasta_saida": "saida",
+  "incluir_dia_seguinte": true,
+  "campo_data_busca": "data_apoio",
+  "colunas": {},
+  "email": {
+    "remetente": "gabriel.henrique@sas.pe.gov.br",
+    "nome_remetente": "NATM",
+    "para_padrao": "gabriel.henrique@sas.pe.gov.br",
+    "smtp": {
+      "servidor": "smtp.gmail.com",
+      "porta": 587,
+      "usuario": "Gabriel.henrique@sas.pe.gov.br",
+      "senha_variavel_ambiente": "SMTP_SENHA",
+      "usar_starttls": true
+    }
+  }
+}

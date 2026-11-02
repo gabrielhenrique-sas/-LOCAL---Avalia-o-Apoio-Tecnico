@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+{% if sucesso %}<div class="msg ok">{{ sucesso }}</div>{% endif %}
+{% if erro %}<div class="msg erro">{{ erro }}</div>{% endif %}
+{% if aviso %}<div class="msg aviso">{{ aviso }}</div>{% endif %}
+
+<section class="card">
+  <h2>{{ p.municipio }} — Apoio Técnico de {% for d in p.datas %}{{ d|data }}{{ ', ' if not loop.last }}{% endfor %}</h2>
+  <div>Modalidade: <b>{{ p.modalidades|join(' e ') }}</b> · Gerências: {{ p.gerencias|join(', ') or '-' }}</div>
+  {% for c in p.contagens %}
+    <div>{{ c.data|data }}: <b>{{ c.exatas + c.seguinte }}</b> respostas
+      <span class="suave">({{ c.exatas }} com a data informada{% if p.incluir_dia_seguinte %}, {{ c.seguinte }} no dia seguinte{% endif %})</span></div>
+  {% endfor %}
+  {% if not p.total %}<div class="msg aviso" style="margin-top:10px">Nenhuma resposta encontrada. O e-mail abaixo é o aviso padrão de "sem respostas", sem anexo.</div>{% endif %}
+  {% for a in p.avisos %}<div class="msg aviso" style="margin-top:8px">{{ a }}</div>{% endfor %}
+
+  <form method="post" action="{{ url_for('acao', token=token) }}" id="f" style="margin-top:8px">
+    <label class="inline">
+      <input type="checkbox" name="dia_seguinte" value="1" {{ 'checked' if p.incluir_dia_seguinte }}>
+      Incluir respostas do dia seguinte
+    </label>
+    <button type="submit" name="acao" value="regerar" class="sec" style="margin-left:10px">Atualizar PDF</button>
+
+    <div class="grade" style="margin-top:14px">
+      <div>
+        <div class="suave">De: {{ (p.nome_remetente ~ ' ') if p.nome_remetente }}{{ '<' ~ p.remetente ~ '>' if p.remetente else '(remetente não configurado)' }}</div>
+        <label for="para">Para</label>
+        <input type="text" id="para" name="para" value="{{ p.para }}">
+        <label for="cc">Cc</label>
+        <input type="text" id="cc" name="cc" value="{{ p.cc }}">
+        <label for="cco">Cco (cópia oculta)</label>
+        <textarea id="cco" name="cco" rows="2">{{ p.cco }}</textarea>
+        <div class="suave">Separe os endereços por vírgula, ponto e vírgula ou quebra de linha.</div>
+        <label for="assunto">Assunto</label>
+        <input type="text" id="assunto" name="assunto" value="{{ p.assunto }}">
+        <label for="corpo">Mensagem</label>
+        <textarea id="corpo" name="corpo" rows="12">{{ p.corpo }}</textarea>
+        {% if p.pdf %}
+          <label>Anexo</label>
+          <span class="anexo">{{ p.pdf.replace('\\', '/').split('/')[-1] }}</span>
+        {% endif %}
+        <div class="acoes">
+          <button type="submit" name="acao" value="enviar" {{ 'disabled' if (not smtp_ok) or p.enviado }}
+                  onclick="return confirm('Enviar este e-mail agora?');">Enviar e-mail</button>
+          <button type="submit" name="acao" value="eml" class="sec">Baixar rascunho (.eml)</button>
+          {% if p.pdf %}<a class="botao sec" href="{{ url_for('pdf', token=token) }}" download>Baixar PDF</a>{% endif %}
+          <a class="botao sec" href="{{ url_for('index', semana=semana.isoformat()) }}">Voltar</a>
+        </div>
+        {% if not smtp_ok %}
+          <p class="suave">O botão de envio está desativado porque o SMTP não está configurado no config.json (a senha vem da variável de ambiente SMTP_SENHA).
+            Você pode baixar o rascunho (.eml), abrir no seu programa de e-mail e enviar de lá.</p>
+        {% endif %}
+      </div>
+      <div>
+        {% if p.pdf %}
+          <iframe class="pdf" src="{{ url_for('pdf', token=token) }}#view=FitH" title="Pré-visualização do PDF"></iframe>
+        {% else %}
+          <div class="msg aviso">Sem PDF, pois não houve respostas.</div>
+        {% endif %}
+      </div>
+    </div>
+  </form>
+</section>
+{% endblock %}
